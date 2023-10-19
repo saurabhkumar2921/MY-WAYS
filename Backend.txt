@@ -1,0 +1,84 @@
+// server/app.js
+const express = require("express");
+const socketIO = require("socket.io");
+const http = require("http");
+const mongoose = require("mongoose");
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIO(server);
+
+// Connect to MongoDB database
+mongoose.connect("mongodb://your-mongodb-uri", { useNewUrlParser: true }); // Replace with your MongoDB URI
+
+// Create a schema for chat messages
+const messageSchema = new mongoose.Schema({
+  text: String,
+  sender: String,
+  timestamp: Date,
+  room: String,
+});
+
+const Message = mongoose.model("Message", messageSchema);
+
+// Create a schema for chat rooms
+const roomSchema = new mongoose.Schema({
+  name: String,
+});
+
+const Room = mongoose.model("Room", roomSchema);
+
+// Create a RESTful API for CRUD operations on chat rooms
+app.get("/rooms", async (req, res) => {
+  const rooms = await Room.find();
+  res.send(rooms);
+});
+
+app.post("/rooms", async (req, res) => {
+  const room = new Room({
+    name: req.body.name,
+  });
+
+  await room.save();
+  res.send(room);
+});
+
+// Start the Node.js server
+server.listen(3000, () => {
+  console.log("Server is listening on port 3000");
+});
+
+// Handle real-time chat updates using Socket.io
+io.on("connection", (socket) => {
+  // Join the default room when the client connects
+  socket.join("Default");
+
+  socket.on("message", async (message) => {
+    const newMessage = new Message(message);
+    await newMessage.save();
+    io.to("Default").emit("message", newMessage);
+  });
+
+  socket.on("rooms", async () => {
+    const rooms = await Room.find();
+    socket.emit("rooms", rooms);
+  });
+
+  socket.on("join", (room) => {
+    socket.leaveAll();
+    socket.join(room.name);
+    socket.emit("message", {
+      text: `You have joined ${room.name}`,
+      sender: "System",
+    });
+  });
+
+  socket.on("leave", () => {
+    socket.leaveAll();
+    socket.join("Default");
+    socket.emit("message", {
+      text: "You have left the room",
+      sender: "System",
+    });
+  });
+});

@@ -1,0 +1,78 @@
+// client/src/App.js
+import React, { useState, useEffect } from "react";
+import socketIOClient from "socket.io-client";
+import "./App.css";
+
+const App = () => {
+  const [socket, setSocket] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [currentRoom, setCurrentRoom] = useState(null);
+
+  useEffect(() => {
+    const socket = socketIOClient("http://your-server-ip:3000"); // Replace with your server IP
+    setSocket(socket);
+
+    socket.on("message", (message) => {
+      setMessages([...messages, message]);
+    });
+
+    socket.on("rooms", (rooms) => {
+      setRooms(rooms);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const sendMessage = (message) => {
+    socket.emit("message", message);
+  };
+
+  const joinRoom = (room) => {
+    socket.emit("join", room);
+    setCurrentRoom(room);
+  };
+
+  const leaveRoom = () => {
+    socket.emit("leave");
+    setCurrentRoom(null);
+  };
+
+  const renderMessages = () => {
+    return messages.map((message) => (
+      <li key={message.id}>{message.text}</li>
+    ));
+  };
+
+  const renderRooms = () => {
+    return rooms.map((room) => (
+      <li key={room.id}>
+        <button onClick={() => joinRoom(room)}>{room.name}</button>
+      </li>
+    ));
+  };
+
+  return (
+    <div className="App">
+      <h1>Chat App</h1>
+      <div className="chat-room">
+        <h2>{currentRoom && currentRoom.name}</h2>
+        <ul>{renderMessages()}</ul>
+        <input
+          type="text"
+          placeholder="Enter a message..."
+          onChange={(e) => sendMessage(e.target.value)}
+        />
+      </div>
+      <div className="rooms">
+        <h2>Rooms</h2>
+        <ul>{renderRooms()}</ul>
+        <button onClick={leaveRoom}>Leave Room</button>
+      </div>
+    </div>
+  );
+};
+
+export default App;

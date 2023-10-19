@@ -1,0 +1,30 @@
+Step 1: Project Structure
+
+Create a directory structure for your MERN project:
+
+
+my-mern-chat-board/
+  ├── client/
+  │   ├── src/
+  │   │   ├── components/
+  │   │   │   ├── ChatRoom.js
+  │   │   │   ├── TaskBoard.js
+  │   │   │   ├── ...
+  │   │   ├── App.js
+  │   │   ├── index.js
+  │   └── package.json
+  ├── server/
+  │   ├── app.js
+  │   ├── routes/
+  │   │   ├── chat.js
+  │   │   ├── task.js
+  │   │   ├── ...
+  │   ├── models/
+  │   │   ├── User.js
+  │   │   ├── ChatRoom.js
+  │   │   ├── Task.js
+  │   ├── config/
+  │   │   ├── database.js
+  │   │   ├── jwt.js
+  │   └── package.json
+  └── package.json
